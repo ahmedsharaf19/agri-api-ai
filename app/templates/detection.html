@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>كشف أمراض النباتات</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">الرئيسية</a>
+        <a href="/chatbot">المساعد الزراعي</a>
+        <a href="/detection">كشف الأمراض</a>
+    </nav>
+
+    <div class="container">
+        <h1>🧪 كشف أمراض النبات</h1>
+        <form id="detectForm" enctype="multipart/form-data">
+            <input type="file" name="file" id="fileInput" required>
+            <button type="submit">تشخيص</button>
+        </form>
+
+        <div id="imagePreview"></div>
+        <div id="resultBox"></div>
+        <div id="treatmentBox"></div>
+    </div>
+
+    <script>
+        document.getElementById("detectForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // التحقق من وجود ملف
+            const fileInput = document.getElementById("fileInput");
+            if (!fileInput.files[0]) {
+                alert("يرجى اختيار صورة أولاً");
+                return;
+            }
+
+            // إظهار رسالة التحميل
+            document.getElementById("resultBox").innerHTML = `<h3>⏳ جاري التحليل...</h3><p>يرجى الانتظار...</p>`;
+            document.getElementById("treatmentBox").innerHTML = "";
+            document.getElementById("imagePreview").innerHTML = "";
+
+            try {
+                const formData = new FormData();
+                formData.append("file", fileInput.files[0]);
+
+                const response = await fetch("/api/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+            const data = await response.json();
+
+            if (data.error) {
+                document.getElementById("resultBox").innerHTML = `<h3>❌ خطأ:</h3><p>${data.error}</p>`;
+                return;
+            }
+
+            // عرض الصورة
+            if (data.image_url) {
+                document.getElementById("imagePreview").innerHTML = `<img src="${data.image_url}" style="max-width: 400px; border-radius: 8px;">`;
+            }
+
+            // الأمراض
+            let diseasesText = "لم يتم الكشف عن أمراض.";
+            if (data.diseases && data.diseases.length > 0) {
+                diseasesText = data.diseases.join(", ");
+            }
+            document.getElementById("resultBox").innerHTML = `<h3>🌱 الأمراض المكتشفة:</h3><p>${diseasesText}</p>`;
+
+            // العلاج
+            const treatment = data.treatment || "لا يوجد علاج متاح.";
+            document.getElementById("treatmentBox").innerHTML = `<h3>💊 العلاج المقترح:</h3><p style="line-height: 1.6;">${treatment}</p>`;
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById("resultBox").innerHTML = `<h3>❌ خطأ في الاتصال:</h3><p>حدث خطأ أثناء تحليل الصورة. يرجى المحاولة مرة أخرى.</p>`;
+                document.getElementById("treatmentBox").innerHTML = "";
+            }
+        });
+    </script>
+</body>
+</html>

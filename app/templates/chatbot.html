@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>المساعد الزراعي</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">الرئيسية</a>
+        <a href="/chatbot">المساعد الزراعي</a>
+        <a href="/detection">كشف الأمراض</a>
+    </nav>
+
+    <div class="container">
+        <h1>🤖 المساعد الزراعي الذكي</h1>
+        <form id="chatForm">
+            <textarea id="userInput" name="user_input" placeholder="اكتب سؤالك هنا..." required></textarea>
+            <button type="submit">إرسال</button>
+        </form>
+
+        <div id="responseBox" class="response"></div>
+    </div>
+
+    <script>
+        document.getElementById("chatForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append("user_input", document.getElementById("userInput").value);
+
+            const response = await fetch("/api/chatbot", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+            document.getElementById("responseBox").innerHTML = `<h3>الرد:</h3><p>${data.response}</p>`;
+        });
+    </script>
+</body>
+</html>
